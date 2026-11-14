@@ -1,0 +1,402 @@
+basePath: /api
+definitions:
+  domain.Interaction:
+    properties:
+      id:
+        example: 65f1a2b3c4d5e6f7a8b9c0d3
+        type: string
+      item_id:
+        example: 65f1a2b3c4d5e6f7a8b9c0d2
+        type: string
+      rating_value:
+        example: 5
+        type: integer
+      timestamp:
+        type: string
+      type:
+        description: '"view", "rating", "selection"'
+        example: rating
+        type: string
+      user_id:
+        example: 65f1a2b3c4d5e6f7a8b9c0d1
+        type: string
+      watch_time_sec:
+        example: 8800
+        type: integer
+    type: object
+  domain.Item:
+    properties:
+      category:
+        example: Sci-Fi
+        type: string
+      description:
+        example: A thief steals corporate secrets through dream-sharing technology.
+        type: string
+      duration_min:
+        example: 148
+        type: integer
+      id:
+        example: 65f1a2b3c4d5e6f7a8b9c0d2
+        type: string
+      name:
+        example: Inception
+        type: string
+      rating:
+        example: 8.8
+        type: number
+      release_year:
+        example: 2010
+        type: integer
+    type: object
+  domain.User:
+    properties:
+      created_at:
+        type: string
+      email:
+        example: yelzhan@aitu.edu.kz
+        type: string
+      favorite_genres:
+        example:
+        - Sci-Fi
+        - Drama
+        items:
+          type: string
+        type: array
+      id:
+        example: 65f1a2b3c4d5e6f7a8b9c0d1
+        type: string
+      name:
+        example: Yelzhan
+        type: string
+      password:
+        example: secret123
+        type: string
+    type: object
+  http.ErrorResponse:
+    properties:
+      error:
+        example: invalid request
+        type: string
+    type: object
+  http.LoginRequest:
+    properties:
+      email:
+        example: yelzhan@aitu.edu.kz
+        type: string
+      password:
+        example: secret123
+        type: string
+    type: object
+  http.LoginResponse:
+    properties:
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: 'NoSQL Data Layer & Backend API for a Streaming Recommendation Platform
+    (Assignment #6).'
+  title: StreamRec Core API
+  version: "1.0"
+paths:
+  /interactions:
+    post:
+      consumes:
+      - application/json
+      description: Logs a user interaction with an item (requires JWT Bearer Token)
+      parameters:
+      - description: Interaction event payload
+        in: body
+        name: interaction
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Interaction'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Interaction'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Record user interaction
+      tags:
+      - Interactions
+  /items:
+    get:
+      description: Returns all movies and series stored in the catalog
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Item'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: List all catalog items
+      tags:
+      - Items Catalog
+    post:
+      consumes:
+      - application/json
+      description: Adds a new movie or series to the catalog
+      parameters:
+      - description: Catalog item payload
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Item'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.Item'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Create a new catalog item
+      tags:
+      - Items Catalog
+  /items/{id}:
+    delete:
+      description: Removes a movie or series from the catalog by its ObjectID
+      parameters:
+      - description: Item ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Delete catalog item
+      tags:
+      - Items Catalog
+    get:
+      description: Returns a single movie or series by its ObjectID
+      parameters:
+      - description: Item ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Item'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Get catalog item by ID
+      tags:
+      - Items Catalog
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing movie or series by its ObjectID
+      parameters:
+      - description: Item ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated item payload
+        in: body
+        name: item
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Item'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Item'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Update catalog item
+      tags:
+      - Items Catalog
+  /items/search:
+    get:
+      description: Finds movies or series by name substring, category, or release
+        year
+      parameters:
+      - description: Search query by item name (case-insensitive)
+        in: query
+        name: q
+        type: string
+      - description: Filter by category (e.g., Sci-Fi, Drama, Action)
+        in: query
+        name: category
+        type: string
+      - description: Filter by release year (e.g., 2014)
+        in: query
+        name: year
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Item'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Search catalog items
+      tags:
+      - Items Catalog
+  /users/{id}:
+    get:
+      description: Retrieves user profile details by MongoDB ObjectID
+      parameters:
+      - description: User ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.User'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Get user profile
+      tags:
+      - Users & Auth
+  /users/{id}/interactions:
+    get:
+      description: Retrieves interaction history for a user (requires JWT Bearer Token)
+      parameters:
+      - description: User ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.Interaction'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user interaction history
+      tags:
+      - Interactions
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Logs in a user and returns a signed JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/http.LoginResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Authenticate user
+      tags:
+      - Users & Auth
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account and profile with favorite genres
+      parameters:
+      - description: User registration payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/domain.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/http.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - Users & Auth
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer " followed by your JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
