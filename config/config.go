@@ -5,10 +5,11 @@ import (
 )
 
 type Config struct {
-	AppEnv   string `mapstructure:"APP_ENV"`
-	HTTPPort string `mapstructure:"HTTP_PORT"`
-	MongoURI string `mapstructure:"MONGO_URI"`
-	MongoDB  string `mapstructure:"MONGO_DB"`
+	AppEnv    string `mapstructure:"APP_ENV"`
+	HTTPPort  string `mapstructure:"HTTP_PORT"`
+	MongoURI  string `mapstructure:"MONGO_URI"`
+	MongoDB   string `mapstructure:"MONGO_DB"`
+	JWTSecret string `mapstructure:"JWT_SECRET"`
 }
 
 func Load() (*Config, error) {
@@ -16,6 +17,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("HTTP_PORT", "8080")
 	viper.SetDefault("MONGO_URI", "mongodb://localhost:27017")
 	viper.SetDefault("MONGO_DB", "stream_rec_db")
+	viper.SetDefault("JWT_SECRET", "super-secret-jwt-key-2026") // Default secret key
 
 	viper.AutomaticEnv()
 
